@@ -1,0 +1,6 @@
+go.sum
+
+swagger/docs.go
+swagger/swagger.json
+
+/chat-server

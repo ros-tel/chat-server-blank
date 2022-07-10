@@ -1,0 +1,462 @@
+basePath: /
+definitions:
+  Chat:
+    description: Чат p2p
+    properties:
+      last_message:
+        $ref: '#/definitions/Message'
+        description: |-
+          Последнее сообщения в чате
+          * null когда в чате не сообщений
+        x-nullable: true
+      last_read_message_id:
+        description: |-
+          ID последнего прочитанного мной сообщения
+          * null когда текущий пользователь не читал сообщения
+        example: 10a3d4e7-c1b0-471a-bbfe-c168902354e8
+        type: string
+        x-nullable: true
+      unread_count:
+        description: Количество непрочитанных сообщений у пользователя для запросившего!
+        example: 3
+        type: integer
+      user:
+        $ref: '#/definitions/User'
+        description: Информация по пользователю
+    type: object
+  Groupchat:
+    description: Групповые чаты
+    properties:
+      id:
+        description: ID конференции
+        example: 103
+        type: integer
+      last_message:
+        $ref: '#/definitions/Message'
+        description: |-
+          Последнее сообщения в чате
+          * null когда в чате не сообщений
+        x-nullable: true
+      last_read_message_id:
+        description: |-
+          ID последнего прочитанного мной сообщения
+          * null когда текущий пользователь не читал сообщения
+        example: 10a3d4e7-c1b0-471a-bbfe-c168902354e8
+        type: string
+        x-nullable: true
+      name:
+        description: Название группы
+        example: Общая группа
+        type: string
+      unread_count:
+        description: Количество непрочитанных сообщений у пользователя для запросившего!
+        example: 3
+        type: integer
+      user:
+        description: Информация по пользователю
+        items:
+          $ref: '#/definitions/GroupchatMember'
+        type: array
+      user_owner_id:
+        description: ID пользователя владеющего (создателя) группой
+        example: 13
+        type: integer
+    type: object
+  GroupchatMember:
+    description: Участник группового чата
+    properties:
+      permission_level:
+        description: |-
+          Уровень прав
+          * 0 - участник
+          * 9 - админ
+        example: 0
+        type: integer
+      user:
+        $ref: '#/definitions/User'
+        description: Информация по пользователю
+    type: object
+  Message:
+    description: Сообщение в чате
+    properties:
+      author_id:
+        description: ID автора (агент)
+        example: 50
+        type: integer
+      id:
+        description: ID сообщения
+        example: d096b756-8b38-4b00-b3b2-e23946400fdf
+        type: string
+      message:
+        description: Тело сообщения
+        example: Превед медвед!
+        type: string
+      time:
+        description: Время сообщения
+        type: string
+      type:
+        description: |-
+          Тип сообщения
+          * 1 - текстовое сообщение
+        example: 1
+        type: integer
+    type: object
+  User:
+    description: Информация по пользователю
+    properties:
+      id:
+        description: ID пользователя
+        example: 12
+        type: integer
+      name:
+        description: Имя пользователя
+        example: Иван
+        type: string
+      patronymic:
+        description: Отчество пользователя
+        example: Иванов
+        type: string
+      surname:
+        description: Фамилия пользователя
+        example: Иванович
+        type: string
+    type: object
+  list.ContactsResponse:
+    properties:
+      chats:
+        items:
+          $ref: '#/definitions/Chat'
+        type: array
+      groupchats:
+        items:
+          $ref: '#/definitions/Groupchat'
+        type: array
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+paths:
+  /api/v1/auth/who/:
+    get:
+      consumes:
+      - application/json
+      description: Метод возвращает информацию о текущем пользователе
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/User'
+        "401":
+          description: Неверные данные для авторизации
+        "500":
+          description: Ошибка сервера
+      security:
+      - Basic: []
+      summary: Получение информации о текущем пользователе
+      tags:
+      - auth
+  /api/v1/chat/:
+    get:
+      consumes:
+      - application/json
+      description: Метод возвращает историю сообщений для p2p-чата
+      parameters:
+      - description: ID чата по которому необходимо вернуть данные
+        example: 12
+        in: query
+        name: id
+        required: true
+        type: integer
+      - description: Дата начала интервала выборки, если не указана, то берется начало
+          списка (последнее или первое)
+        in: query
+        name: date_start
+        type: string
+      - description: Направление запроса
+        enum:
+        - prev
+        - next
+        example: prev
+        in: query
+        name: dir
+        type: string
+      - description: Количество объектов в результате
+        example: 10
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/Message'
+            type: array
+        "400":
+          description: Неверный формат данных
+        "401":
+          description: Неверные данные для авторизации
+      security:
+      - Basic: []
+      summary: Получение истории сообщений для p2p-чата
+      tags:
+      - chat
+  /api/v1/chat/add/:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Метод добавляет p2p-контакт в список контактов текущего пользователя
+      parameters:
+      - description: ID Пользователя
+        example: 232
+        in: formData
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Chat'
+        "400":
+          description: Неверный формат данных
+        "401":
+          description: Неверные данные для авторизации
+      security:
+      - Basic: []
+      summary: Добавить p2p-контакт
+      tags:
+      - chat
+  /api/v1/chat/hide/:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Метод удаляет p2p-контакт из списока контактов текущего пользователя
+      parameters:
+      - description: ID Пользователя
+        example: 232
+        in: formData
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешно
+        "400":
+          description: Неверный формат данных
+        "401":
+          description: Неверные данные для авторизации
+      security:
+      - Basic: []
+      summary: Удалить p2p-контакт
+      tags:
+      - chat
+  /api/v1/groupchat/:
+    get:
+      consumes:
+      - application/json
+      description: Метод возвращает историю сообщений по групповому чату
+      parameters:
+      - description: ID чата по которому необходимо вернуть данные
+        example: 12
+        in: query
+        name: id
+        required: true
+        type: integer
+      - description: Дата начала интервала выборки, если не указана, то берется начало
+          списка (последнее или первое)
+        in: query
+        name: date_start
+        type: string
+      - description: Направление запроса
+        enum:
+        - prev
+        - next
+        example: prev
+        in: query
+        name: dir
+        type: string
+      - description: Количество объектов в результате
+        example: 10
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/Message'
+            type: array
+        "400":
+          description: Неверный формат данных
+        "401":
+          description: Неверные данные для авторизации
+      security:
+      - Basic: []
+      summary: Получение истории сообщений по групповому чату
+      tags:
+      - groupchat
+    patch:
+      consumes:
+      - multipart/form-data
+      description: Метод изменяет групповой чат
+      parameters:
+      - description: ID группы
+        example: 232
+        in: formData
+        name: id
+        required: true
+        type: integer
+      - description: Название группы
+        example: Новая
+        in: formData
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Groupchat'
+        "400":
+          description: Неверный формат данных
+        "401":
+          description: Неверные данные для авторизации
+      security:
+      - Basic: []
+      summary: Изменение группового чата
+      tags:
+      - groupchat
+    put:
+      consumes:
+      - multipart/form-data
+      description: Метод создает групповой чат
+      parameters:
+      - description: Название группы
+        example: Новая
+        in: formData
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Groupchat'
+        "400":
+          description: Неверный формат данных
+        "401":
+          description: Неверные данные для авторизации
+      security:
+      - Basic: []
+      summary: Создание группового чата
+      tags:
+      - groupchat
+  /api/v1/groupchat/join/:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Метод добавляет текущего пользователя в участники в группового
+        чата
+      parameters:
+      - description: ID группы
+        example: 232
+        in: formData
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Groupchat'
+        "400":
+          description: Неверный формат данных
+        "401":
+          description: Неверные данные для авторизации
+      security:
+      - Basic: []
+      summary: Присоединиться к групповому чату
+      tags:
+      - groupchat
+  /api/v1/groupchat/leave/:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Метод удаляет текущего пользователя из участников в группового
+        чата
+      parameters:
+      - description: ID группы
+        example: 12
+        in: formData
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешно
+        "400":
+          description: Неверный формат данных
+        "401":
+          description: Неверные данные для авторизации
+      security:
+      - Basic: []
+      summary: Покинуть групповой чат
+      tags:
+      - groupchat
+  /api/v1/list/contacts/:
+    get:
+      consumes:
+      - application/json
+      description: Метод возвращает информацию о контактах текущего пользователя
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/list.ContactsResponse'
+        "401":
+          description: Неверные данные для авторизации
+      security:
+      - Basic: []
+      summary: Получение информации о контактах
+      tags:
+      - list
+schemes:
+- http
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"
+tags:
+- description: Методы авторизации и управления сессией
+  name: auth
+- description: Методы получения контактной информации
+  name: list
+- description: Методы получения истории сообщений и управления p2p-чатами
+  name: chat
+- description: Методы получения истории сообщений и управления групповыми чатами
+  name: groupchat
