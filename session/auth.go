@@ -1,11 +1,7 @@
 package session
 
 import (
-	"crypto/md5"
-	"encoding/base64"
-	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -48,7 +44,7 @@ var (
 
 func SetSessionVars() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		username, password, ok := basicAuth(c)
+		username, password, ok := c.Request.BasicAuth()
 		if ok {
 			if a, ok := auths[username]; ok {
 				if password == a.password {
@@ -67,42 +63,4 @@ func AuthRequired() gin.HandlerFunc {
 			c.AbortWithStatus(http.StatusUnauthorized)
 		}
 	}
-}
-
-// BasicAuth returns the username and password provided in the request's
-// Authorization header, if the request uses HTTP Basic Authentication.
-// See RFC 2617, Section 2.
-func basicAuth(c *gin.Context) (username, password string, ok bool) {
-	auth := c.GetHeader("Authorization")
-	if auth == "" {
-		return
-	}
-	return parseBasicAuth(auth)
-}
-
-// parseBasicAuth parses an HTTP Basic Authentication string.
-// "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==" returns ("Aladdin", "open sesame", true).
-func parseBasicAuth(auth string) (username, password string, ok bool) {
-	const prefix = "Basic "
-	// Case insensitive prefix match. See Issue 22736.
-	if len(auth) < len(prefix) || !strings.EqualFold(auth[:len(prefix)], prefix) {
-		return
-	}
-	c, err := base64.StdEncoding.DecodeString(auth[len(prefix):])
-	if err != nil {
-		return
-	}
-	cs := string(c)
-	s := strings.IndexByte(cs, ':')
-	if s < 0 {
-		return
-	}
-	return cs[:s], cs[s+1:], true
-}
-
-// Генерация хеша 1С-Connect
-func makeAuthHash(username, password string) string {
-	h1 := fmt.Sprintf("%s:xbwg64okfdvb34fvi3:%s", username, password)
-	hash := md5.Sum([]byte(h1))
-	return fmt.Sprintf("%X", hash)
 }
