@@ -25,6 +25,7 @@ package main
 import (
 	v1 "chat-server/api/v1"
 	"chat-server/session"
+	"chat-server/ws"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,6 +38,7 @@ func main() {
 	)
 
 	v1.InitRoutes(r)
+	ws.InitRoutes(r)
 
 	r.Static("/swagger/", "./swagger")
 

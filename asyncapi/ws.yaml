@@ -1,0 +1,73 @@
+asyncapi: 2.4.0
+info:
+  title: WebSocket messages
+  version: 1.0.0
+  description: Эхо сервер
+servers:
+  dev:
+    url: ws://127.0.0.1:8080/ws
+    protocol: ws
+    description: This is "My Company" broker.
+channels:
+  auth:
+    publish:
+      message:
+        $ref: '#/components/messages/MsgAuth'
+  chat:
+    publish:
+      message:
+        $ref: '#/components/messages/MsgChat'
+components:
+  messages:
+    MsgAuth:
+      payload:
+        type: object
+        properties:
+          type:
+            type: string
+            example: auth
+          auth:
+            type: object
+            $ref: '#/components/messages/Auth'
+            example:
+              login: alisa
+              password: pass
+    MsgChat:
+      payload:
+        type: object
+        properties:
+          type:
+            type: string
+            example: сhat
+          сhat:
+            type: object
+            $ref: '#/components/messages/Chat'
+            example:
+              type: text
+              text: Hello
+    Auth:
+      payload:
+        type: object
+        description: Данные авторизации
+        properties:
+          login:
+            type: string
+            example: alisa
+            description: Логин пользователя
+          password:
+            type: string
+            example: pass
+            description: Пароль пользователя
+    Chat:
+      payload:
+        type: object
+        description: Сообщение
+        properties:
+          type:
+            type: string
+            example: text
+            description: Тип сообщения
+          text:
+            type: string
+            example: Hello
+            description: Текст сообщения

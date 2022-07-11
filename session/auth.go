@@ -44,12 +44,9 @@ var (
 
 func SetSessionVars() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		username, password, ok := c.Request.BasicAuth()
-		if ok {
-			if a, ok := auths[username]; ok {
-				if password == a.password {
-					c.Set("user_id", a.id)
-				}
+		if username, password, ok := c.Request.BasicAuth(); ok {
+			if user_id, ok := CheckCred(username, password); ok {
+				c.Set("user_id", user_id)
 			}
 		}
 	}
@@ -63,4 +60,19 @@ func AuthRequired() gin.HandlerFunc {
 			c.AbortWithStatus(http.StatusUnauthorized)
 		}
 	}
+}
+
+func CheckCred(username, password string) (int64, bool) {
+	var (
+		valid   bool
+		user_id int64
+	)
+	if a, ok := auths[username]; ok {
+		if password == a.password {
+			valid = true
+			user_id = a.id
+		}
+	}
+
+	return user_id, valid
 }
